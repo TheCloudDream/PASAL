@@ -27,7 +27,7 @@ class Buyer(Base):
     shipping_addr = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="buyer")
-    orders = relationship("Order", back_populates="order")
+    orders = relationship("Order", back_populates="buyer")
 
 class Seller(Base):
     __tablename__ = "sellers"

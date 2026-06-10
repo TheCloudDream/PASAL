@@ -21,7 +21,7 @@ def register_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
     hashed_pwd = utils.hash_password(payload.password)
     
     # 3. Instantiate the root User identity
-    new_user = User(email=payload.email, password_hash=hashed_pwd)
+    new_user = User(email=payload.email, hashed_password=hashed_pwd)
     db.add(new_user)
     db.flush()  # Generates the user_id without committing the transaction yet
 
@@ -58,17 +58,15 @@ def register_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # OAuth2PasswordRequestForm parses form-data fields 'username' and 'password'
     user = db.query(User).filter(User.email == form_data.username).first()
     
-    if not user or not utils.verify_password(form_data.password, user.password_hash):
+    if not user or not utils.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Pack identifying payloads inside the token claims
     token_claims = {"sub": str(user.user_id), "email": user.email}
     access_token = utils.create_access_token(data=token_claims)
     
