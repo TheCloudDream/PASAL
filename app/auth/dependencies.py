@@ -48,4 +48,4 @@ def get_current_buyer(current_user: User = Depends(get_current_user), db: Sessio
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. This endpoint requires a verified Buyer profile."
         )
-    return buyeroad
+    return buyer
