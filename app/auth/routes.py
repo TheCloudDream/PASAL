@@ -46,7 +46,7 @@ def register_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
         new_seller = Seller(
             user_id=new_user.user_id, 
             store_name=payload.store_name, 
-            store_desc=payload.store_desc
+            store_description=payload.store_desc
         )
         db.add(new_seller)
 
