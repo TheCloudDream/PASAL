@@ -1,8 +1,14 @@
 from pydantic import BaseModel, Field, condecimal
 from datetime import datetime
 from typing import List, Optional
+from enum import Enum
 
-# --- Nested Sub-Tier Items ---
+# Strict data schema for allowed selections
+class PaymentMethodEnum(str, Enum):
+    CASH = "cash"
+    ONLINE = "online"
+
+# --- Nested Sub-Tier Responses ---
 class OrderItemResponse(BaseModel):
     item_id: int
     product_id: int
@@ -21,7 +27,7 @@ class PaymentResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Root Order Frameworks ---
+# --- Root Order Structure ---
 class OrderResponse(BaseModel):
     order_id: int
     buyer_id: int
@@ -34,6 +40,10 @@ class OrderResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Payment Input Processing ---
+# --- Modified Settlement Payload ---
 class PaymentProcess(BaseModel):
-    payment_method: str = Field(..., example="esewa", description="Target merchant payment vehicle name")
+    payment_method: PaymentMethodEnum = Field(
+        ..., 
+        example="online", 
+        description="Choose payment type: 'cash' or 'online'."
+    )

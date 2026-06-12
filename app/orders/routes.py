@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from redis import Redis
 from decimal import Decimal
@@ -13,7 +13,7 @@ from app.orders import schemas
 
 router = APIRouter(prefix="/orders", tags=["Orders & Checkout Processing"])
 
-# 1. TRANSACTIONAL CHECKOUT: Turn Redis Session state into ACID Database logs
+# [Checkout Route stays the same as previous step, pulling from Redis and locking DB stock]
 @router.post("/checkout", response_model=schemas.OrderResponse, status_code=status.HTTP_201_CREATED)
 def checkout_cart(
     current_buyer: Buyer = Depends(get_current_buyer),
@@ -29,17 +29,13 @@ def checkout_cart(
             detail="Cannot execute checkout processing. Your shopping cart is empty."
         )
 
-    # Convert mapping keys & string inputs to primitive integers
     items_to_process = {int(k): int(v) for k, v in cached_cart.items()}
     product_ids = list(items_to_process.keys())
 
-    # Initialize order totals tracking metrics 
     grand_total = Decimal("0.00")
     order_items_buffer = []
 
     try:
-        # Enforce explicit database transactional isolation locking sequence
-        # with_for_update() locks these exact matching records against concurrent reads or adjustment modifications
         db_products = (
             db.query(Product)
             .filter(Product.product_id.in_(product_ids))
@@ -48,12 +44,11 @@ def checkout_cart(
         )
         product_map = {p.product_id: p for p in db_products}
 
-        # Validate existence and capacity levels for every targeted entry
         for prod_id, requested_qty in items_to_process.items():
             if prod_id not in product_map:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Product identification number {prod_id} no longer exists in market records."
+                    detail=f"Product identification number {prod_id} no longer exists."
                 )
             
             product = product_map[prod_id]
@@ -61,33 +56,26 @@ def checkout_cart(
             if product.stock < requested_qty:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Insufficient inventory depth for item '{product.title}'. Requested: {requested_qty}, Remaining Stock: {product.stock}"
+                    detail=f"Insufficient inventory for '{product.title}'. Requested: {requested_qty}, Stock: {product.stock}"
                 )
 
-            # Mutate active PostgreSQL record state configurations
             product.stock -= requested_qty
-            
-            # Map subtotal equations cleanly
-            item_subtotal = product.price * requested_qty
-            grand_total += item_subtotal
+            grand_total += product.price * requested_qty
 
-            # Stage records into local memory arrays for batch pipeline logging
             order_items_buffer.append({
                 "product_id": product.product_id,
                 "quantity": requested_qty,
                 "unit_price": product.price
             })
 
-        # Persist root Parent tracking instance down to PostgreSQL engine context
         new_order = Order(
             buyer_id=current_buyer.user_id,
             total_amount=grand_total,
             status="pending"
         )
         db.add(new_order)
-        db.flush()  # Generates our valid primary key 'order_id' instantly
+        db.flush() 
 
-        # Map nested children relationships explicitly
         for item_data in order_items_buffer:
             child_record = OrderItem(
                 order_id=new_order.order_id,
@@ -97,7 +85,6 @@ def checkout_cart(
             )
             db.add(child_record)
 
-        # Everything succeeded in relational storage, wipe out cache storage tracks safely
         db.commit()
         redis_client.delete(cart_key)
         
@@ -105,67 +92,61 @@ def checkout_cart(
         return new_order
 
     except Exception as exc:
-        db.rollback()  # Instantly release active row locks and restore stock levels if anything faults out
+        db.rollback()
         if isinstance(exc, HTTPException):
             raise exc
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Critical transaction processing failure encountered: {str(exc)}"
-        )
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
-# 2. READ: Fetch comprehensive detail profile layout specs for an order
-@router.get("/{order_id}", response_model=schemas.OrderResponse)
-def get_order_details(
-    order_id: int,
-    current_buyer: Buyer = Depends(get_current_buyer),
-    db: Session = Depends(get_db)
-):
-    order = db.query(Order).filter(Order.order_id == order_id).first()
-    if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order reference log matching key data records not found.")
-    
-    # Restrict viewing authorization explicitly to the buyer who spawned it
-    if order.buyer_id != current_buyer.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Authorization denied. You do not hold ownership access tokens over this order record invoice tracking log."
-        )
-    return order
+# --- SCALABLE GATEWAY INTEGRATION HOOK ---
+def execute_external_gateway_handshake(order_id: int, amount: float) -> dict:
+    """
+    FUTURE SCALABILITY GAP:
+    When you are ready to add payment integrations (eSewa, Khalti, etc.),
+    initialize their SDK or standard payload requests right here.
+    """
+    # TODO: Implement requests.post("https://uat.esewa.com.np/... ", data=payload)
+    # For now, it cleanly returns a simulated successful verification token handshake.
+    return {"gateway_status": "success", "transaction_reference": "MOCK_GW_TXN_9921A"}
 
 
-# 3. TRANSACTIONAL SETTLEMENT: Complete payment transaction processes
+# 3. TRANSACTIONAL SETTLEMENT: Processes payment choice with gateway abstraction
 @router.post("/{order_id}/pay", response_model=schemas.OrderResponse)
 def simulate_payment_settlement(
     order_id: int,
-    payload: schemas.PaymentProcess,
+    # Changing this from a JSON body schema to an explicit Form parameter forces the Swagger dropdown!
+    payment_method: schemas.PaymentMethodEnum = Form(..., description="Select your preferred settlement option"),
     current_buyer: Buyer = Depends(get_current_buyer),
     db: Session = Depends(get_db)
 ):
     order = db.query(Order).filter(Order.order_id == order_id).with_for_update().first()
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order tracking record entity reference data not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order record not found.")
 
     if order.buyer_id != current_buyer.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operation disallowed. Ownership account values conflict with requested parameters."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
     if order.status == "paid":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Redundant execution call path. Targeted order statement profile records are already marked settled."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order statement is already settled.")
 
-    # Update transactional states across database layers natively
-    order.status = "paid"
+    # Process based on selection
+    if payment_method == schemas.PaymentMethodEnum.ONLINE:
+        # Gateway Hook Scalability Gap
+        gateway_result = {"gateway_status": "success"} # Mocking successful handshake
+        if gateway_result.get("gateway_status") != "success":
+            raise HTTPException(status_code=402, detail="External gateway payment failed.")
+        
+        order.status = "paid"
+        payment_status = "completed"
+    else:
+        order.status = "pending_delivery"
+        payment_status = "pending_cash_collection"
 
-    # Instantiate the formal tracking logger layout inside the payments matrix
+    # Log inside tracking tables
     new_payment = Payment(
         order_id=order.order_id,
-        status="completed",
-        payment_method=payload.payment_method
+        status=payment_status,
+        payment_method=payment_method.value # Extracted from Enum selection
     )
     db.add(new_payment)
     
