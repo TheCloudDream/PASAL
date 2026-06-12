@@ -376,11 +376,65 @@ pasal/
 
 ## DevOps
 
-* [ ] Dockerization
-* [ ] Kubernetes deployment
-* [ ] Terraform infrastructure
-* [ ] GitHub Actions CI/CD
-* [ ] Monitoring & Logging
+### Docker & Containerization
+
+- [x] Backend Docker Container
+- [x] Frontend Docker Container
+- [x] PostgreSQL Container
+- [x] Redis Container
+- [x] Docker Compose Multi-Container Environment
+- [x] Custom Docker Network
+
+### Reliability & Operations
+
+- [ ] Health Checks
+- [ ] Restart Policies
+- [ ] Application Logging
+- [ ] Environment Configuration Management
+
+### CI/CD
+
+- [ ] GitHub Repository Setup
+- [ ] GitHub Actions CI Pipeline
+- [ ] Automated Testing
+- [ ] Docker Image Build Automation
+- [ ] Container Registry (GHCR)
+
+### Deployment
+
+- [ ] VPS Deployment
+- [ ] Reverse Proxy (Caddy)
+- [ ] HTTPS / SSL Configuration
+
+### Monitoring & Observability
+
+- [ ] Monitoring
+- [ ] Metrics Collection
+- [ ] Log Aggregation
+- [ ] Alerting
+
+### Kubernetes (Ubuntu VM Lab)
+
+- [ ] Ubuntu Server VM Setup (VirtualBox)
+- [ ] Docker Installation on VM
+- [ ] Kubernetes Cluster Setup
+- [ ] kubectl Configuration
+- [ ] Kubernetes Namespaces
+- [ ] ConfigMaps
+- [ ] Secrets Management
+- [ ] Deploy Backend to Kubernetes
+- [ ] Deploy Frontend to Kubernetes
+- [ ] Deploy PostgreSQL to Kubernetes
+- [ ] Deploy Redis to Kubernetes
+- [ ] Kubernetes Services
+- [ ] Ingress Controller
+- [ ] Persistent Volumes
+- [ ] End-to-End Kubernetes Deployment
+
+### Infrastructure as Code
+
+- [ ] Terraform Fundamentals
+- [ ] Infrastructure Provisioning with Terraform
 
 ---
 
