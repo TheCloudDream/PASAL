@@ -11,6 +11,8 @@ from app.products.models import Product
 from app.orders.models import Order, OrderItem, Payment
 from app.orders import schemas
 
+from sqlalchemy.exc import IntegrityError
+
 router = APIRouter(prefix="/orders", tags=["Orders & Checkout Processing"])
 
 # [Checkout Route stays the same as previous step, pulling from Redis and locking DB stock]
@@ -114,42 +116,90 @@ def execute_external_gateway_handshake(order_id: int, amount: float) -> dict:
 @router.post("/{order_id}/pay", response_model=schemas.OrderResponse)
 def simulate_payment_settlement(
     order_id: int,
-    # Changing this from a JSON body schema to an explicit Form parameter forces the Swagger dropdown!
-    payment_method: schemas.PaymentMethodEnum = Form(..., description="Select your preferred settlement option"),
+    payment_method: schemas.PaymentMethodEnum = Form(
+        ..., 
+        description="Select your preferred settlement option"
+    ),
     current_buyer: Buyer = Depends(get_current_buyer),
     db: Session = Depends(get_db)
 ):
-    order = db.query(Order).filter(Order.order_id == order_id).with_for_update().first()
+    order = (
+        db.query(Order)
+        .filter(Order.order_id == order_id)
+        .with_for_update()
+        .first()
+    )
+
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order record not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order record not found."
+        )
 
     if order.buyer_id != current_buyer.user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied."
+        )
 
     if order.status == "paid":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order statement is already settled.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order statement is already settled."
+        )
 
-    # Process based on selection
+    # Prevent duplicate payment records
+    if order.payment:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment already exists for this order."
+        )
+
+    # Process based on payment selection
     if payment_method == schemas.PaymentMethodEnum.ONLINE:
-        # Gateway Hook Scalability Gap
-        gateway_result = {"gateway_status": "success"} # Mocking successful handshake
+        gateway_result = {
+            "gateway_status": "success"
+        }
+
         if gateway_result.get("gateway_status") != "success":
-            raise HTTPException(status_code=402, detail="External gateway payment failed.")
-        
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="External gateway payment failed."
+            )
+
         order.status = "paid"
         payment_status = "completed"
+
     else:
         order.status = "pending_delivery"
         payment_status = "pending_cash_collection"
 
-    # Log inside tracking tables
-    new_payment = Payment(
-        order_id=order.order_id,
-        status=payment_status,
-        payment_method=payment_method.value # Extracted from Enum selection
-    )
-    db.add(new_payment)
-    
-    db.commit()
-    db.refresh(order)
-    return order
+    try:
+        new_payment = Payment(
+            order_id=order.order_id,
+            status=payment_status,
+            payment_method=payment_method.value
+        )
+
+        db.add(new_payment)
+        db.commit()
+
+        db.refresh(order)
+
+        return order
+
+    except IntegrityError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment already exists for this order."
+        )
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Payment processing failed: {str(exc)}"
+        )

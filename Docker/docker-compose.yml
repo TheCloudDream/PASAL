@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: Docker/Dockerfile
+      dockerfile: Docker/backend.Dockerfile
 
     container_name: pasal-backend
 
@@ -15,6 +15,16 @@ services:
     depends_on:
       - postgres
       - redis
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: Docker/frontend.Dockerfile
+
+    container_name: pasal-frontend
+
+    ports:
+      - "3000:80"
 
   postgres:
     image: postgres:17
@@ -42,6 +52,10 @@ services:
 
     volumes:
       - redis_data:/data
+
+networks:
+  pasal-network:
+    driver: bridge
 
 volumes:
   postgres_data:
