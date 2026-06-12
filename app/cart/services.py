@@ -5,7 +5,7 @@ from app.products.models import Product
 def get_buyer_cart_key(buyer_id: int) -> str:
     return f"cart:{buyer_id}"
 
-def update_cart_item_in_cache(redis_client: Redis, buyer_id: int, product_id: int, qunatity: int):
+def update_cart_item_in_cache(redis_client: Redis, buyer_id: int, product_id: int, quantity: int):
     cart_key = get_buyer_cart_key(buyer_id)
     if quantity <= 0:
         # If item volume drops to 0 or below, wipe the field from the hash map completely
