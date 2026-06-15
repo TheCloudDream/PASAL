@@ -364,17 +364,7 @@ pasal/
 
 ---
 
-# 🛣️ Roadmap
-
-## Backend
-
-* [ ] Product search
-* [ ] Product categories
-* [ ] Pagination
-* [ ] Image uploads
-* [ ] Email notifications
-
-## DevOps
+# DevOps Roadmap
 
 ### Docker & Containerization
 
