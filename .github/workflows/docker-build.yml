@@ -1,0 +1,31 @@
+name: Docker Build Verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Backend Image
+        run: |
+          docker build \
+            -f docker/backend.Dockerfile \
+            -t pasal-backend:test \
+            .
+
+      - name: Build Frontend Image
+        run: |
+          docker build \
+            -f docker/frontend.Dockerfile \
+            -t pasal-frontend:test \
+            .
