@@ -6,6 +6,8 @@ services:
 
     container_name: pasal-backend
 
+    restart: unless-stopped
+
     ports:
       - "8000:8000"
 
@@ -38,6 +40,8 @@ services:
 
     container_name: pasal-frontend
 
+    restart: unless-stopped
+
     ports:
       - "3000:80"
     networks:
@@ -46,6 +50,8 @@ services:
   postgres:
     image: postgres:17
     container_name: pasal-postgres
+
+    restart: unless-stopped
 
     environment:
       POSTGRES_DB: pasal_db
@@ -69,6 +75,8 @@ services:
   redis:
     image: redis:7
     container_name: pasal-redis
+
+    restart: unless-stopped
 
     command: redis-server --appendonly yes
 
