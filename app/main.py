@@ -38,3 +38,9 @@ app.include_router(order_router)
 @app.get("/")
 def read_root():
     return {"status": "online", "project": "PASAL"}
+
+@app.get("/health")
+def health():
+    return {
+        "status" : "healthy"
+    }
