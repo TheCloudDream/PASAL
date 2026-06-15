@@ -1,5 +1,6 @@
 services:
   backend:
+    image: pasal-backend:dev
     build:
       context: ..
       dockerfile: Docker/backend.Dockerfile
@@ -34,6 +35,7 @@ services:
       start_period: 20s
 
   frontend:
+    image: pasal-frontend:dev
     build:
       context: ..
       dockerfile: Docker/frontend.Dockerfile

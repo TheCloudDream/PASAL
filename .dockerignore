@@ -19,3 +19,10 @@ node_modules/
 
 Docker/postgres_data/
 Docker/redis_data/
+
+docs/
+
+.coverage
+htmlcov/
+
+.DS_Store
