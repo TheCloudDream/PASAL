@@ -3,7 +3,7 @@ services:
     image: pasal-backend:dev
     build:
       context: ..
-      dockerfile: Docker/backend.Dockerfile
+      dockerfile: docker/backend.Dockerfile
 
     container_name: pasal-backend
 
@@ -38,7 +38,7 @@ services:
     image: pasal-frontend:dev
     build:
       context: ..
-      dockerfile: Docker/frontend.Dockerfile
+      dockerfile: docker/frontend.Dockerfile
 
     container_name: pasal-frontend
 
