@@ -1,7 +1,42 @@
-# .gitignore
+# Virtual Environment
 venv/
-*.pyc
+.venv/
+
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment Variables
 .env
 .env.docker
+
+# Testing
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Type Checking
+.mypy_cache/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+
+# Docker
+Docker/postgres_data/
+Docker/redis_data/
+
+# Kubernetes
+*.kubeconfig
+
+# Build Artifacts
+dist/
+build/
