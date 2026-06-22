@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: frontend
+  namespace: pasal
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+
+      containers:
+        - name: frontend
+
+          image: ghcr.io/theclouddream/pasal-frontend:6f3ee3bab387b0a52bc191d9f6206f3228e0b893
+
+          ports:
+            - containerPort: 80
