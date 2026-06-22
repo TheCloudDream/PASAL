@@ -22,6 +22,19 @@ jobs:
             -f docker/backend.Dockerfile \
             -t pasal-backend:test \
             .
+      - name: Start Backend Container
+        run: |
+          docker run -d \
+            --name pasal-backend-test \
+            -p 8000:8000 \
+            pasal-backend:test
+
+      - name: Wait for backend startup
+        run: sleep 10
+
+      - name: Verify Health Endpoint
+        run: |
+          curl -f http://localhost:8000/health
 
       - name: Build Frontend Image
         run: |
