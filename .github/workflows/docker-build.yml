@@ -27,6 +27,9 @@ jobs:
           docker run -d \
             --name pasal-backend-test \
             -p 8000:8000 \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            -e REDIS_URL="${{ secrets.REDIS_URL }}" \
+            -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" \
             pasal-backend:test
 
       - name: Wait for backend startup
