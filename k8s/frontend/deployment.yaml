@@ -24,7 +24,7 @@ spec:
       containers:
         - name: frontend
 
-          image: ghcr.io/theclouddream/pasal-frontend:6f3ee3bab387b0a52bc191d9f6206f3228e0b893
+          image: ghcr.io/theclouddream/pasal-frontend:97a4e8b9b22cdb80308e9504a31b6d6f252b09bc
 
           ports:
             - containerPort: 80
