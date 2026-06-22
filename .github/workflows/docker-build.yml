@@ -32,6 +32,12 @@ jobs:
       - name: Wait for backend startup
         run: sleep 10
 
+      - name: Show Running Containers
+        run: docker ps -a
+
+      - name: Show Backend Logs
+        run: docker logs pasal-backend-test
+
       - name: Verify Health Endpoint
         run: |
           curl -f http://localhost:8000/health
