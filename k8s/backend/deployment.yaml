@@ -20,7 +20,7 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
-            
+
       containers:
         - name: backend
 
@@ -51,5 +51,3 @@ spec:
 
             initialDelaySeconds: 20
             periodSeconds: 20
-
-
