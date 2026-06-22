@@ -41,5 +41,5 @@ jobs:
           file: docker/frontend.Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/pasal-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/pasal-frontend:${{ github.sha }}
+            ghcr.io/theclouddream/pasal-frontend:latest
+            ghcr.io/theclouddream/pasal-frontend:${{ github.sha }}
