@@ -31,8 +31,8 @@ jobs:
           file: docker/backend.Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/pasal-backend:latest
-            ghcr.io/${{ github.repository_owner }}/pasal-backend:${{ github.sha }}
+            ghcr.io/theclouddream/pasal-backend:latest
+            ghcr.io/theclouddream/pasal-backend:${{ github.sha }}
 
       - name: Build and Push Frontend Image
         uses: docker/build-push-action@v6
