@@ -18,13 +18,13 @@ jobs:
 
       - name: Create CI Environments File
         run: |
-            cat <<EOF > .env.docker
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            REDIS_URL=${{ secrets.REDIS_URL }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            ACCESS_TOKEN_EXPIRE_MINUTES=60
-            EOF
-      
+          cat <<EOF > .env.docker
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          REDIS_URL=${{ secrets.REDIS_URL }}
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          ACCESS_TOKEN_EXPIRE_MINUTES=60
+          EOF
+
       - name: Start Full Stack
         run: |
           docker compose -f docker/docker-compose.yml up -d
