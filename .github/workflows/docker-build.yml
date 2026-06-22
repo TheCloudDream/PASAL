@@ -3,10 +3,10 @@ name: Docker Build Verification
 on:
   push:
     branches:
-      - main
+      - package-runners
   pull_request:
     branches:
-      - main
+      - package-runners
 
 jobs:
   build-images:
