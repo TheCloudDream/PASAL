@@ -8,6 +8,13 @@ metadata:
 spec:
   replicas: 1
 
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
   selector:
     matchLabels:
       app: frontend
@@ -42,3 +49,12 @@ spec:
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
+          
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
